@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Walentynkowa Gra ❤️</title>
+<style>
+body{
+  margin:0;
+  background:#0f0f1a;
+  color:white;
+  font-family:Arial, sans-serif;
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.screen{
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+}
+
+#puzzleScreen{display:flex;}
+
+h1{margin:10px;}
+
+/* SERCA */
+.heart{
+  position:fixed;
+  top:-40px;
+  font-size:20px;
+  animation:fall linear forwards;
+  z-index:1;
+}
+
+@keyframes fall{
+  from{transform:translateY(-40px);opacity:1;}
+  to{transform:translateY(110vh);opacity:0;}
+}
+
+/* PUZZLE */
+#puzzle{
+  width:320px;
+  height:320px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(4,1fr);
+  gap:2px;
+  background:white;
+  padding:4px;
+  border-radius:10px;
+}
+
+.piece{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 85 L15 45 A20 20 0 1 1 50 25 A20 20 0 1 1 85 45 Z' fill='%23ff1e56'/></svg>");
+  background-size:320px 320px;
+  cursor:pointer;
+}
+
+/* PRZYCISK */
+button{
+  padding:12px 25px;
+  margin-top:15px;
+  border:none;
+  border-radius:20px;
+  background:#ff6fa5;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button:hover{opacity:0.8;}
+
+/* GRA REAKCJI */
+#gameBox{
+  width:300px;
+  height:400px;
+  background:#1a1a2e;
+  position:relative;
+  border-radius:15px;
+  overflow:hidden;
+}
+
+#target{
+  width:40px;
+  height:40px;
+  background:#ff1e56;
+  border-radius:50%;
+  position:absolute;
+  cursor:pointer;
+}
+
+#score{
+  font-size:20px;
+  margin:10px;
+}
+
+/* FINAŁ */
+#finalText{
+  font-size:36px;
+  margin:15px;
+}
+</style>
+</head>
+<body>
+
+<audio autoplay loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/02/23/audio_4e1d54c41a.mp3" type="audio/mpeg">
+</audio>
+
+<!-- PUZZLE -->
+<div id="puzzleScreen" class="screen">
+  <h1>Ułóż serce ❤️</h1>
+  <div id="puzzle"></div>
+</div>
+
+<!-- WALENTYNKI -->
+<div id="winScreen" class="screen">
+  <h1>Słodkich Walentynek 💖</h1>
+  <p>Jesteś super ❤️</p>
+  <button onclick="startGame()">Zagraj dalej ➜</button>
+</div>
+
+<!-- GRA -->
+<div id="gameScreen" class="screen">
+  <h1>Złap serduszko 💘</h1>
+  <div id="score">0 / 15</div>
+  <div id="gameBox">
+    <div id="target"></div>
+  </div>
+</div>
+
+<!-- FINAŁ -->
+<div id="finalScreen" class="screen">
+  <div id="finalText">Kocham Cię ❤️</div>
+  <h2>Szczęśliwych Walentynek 💕</h2>
+</div>
+
+<script>
+/* EKRANY */
+const puzzleScreen=document.getElementById("puzzleScreen");
+const winScreen=document.getElementById("winScreen");
+const gameScreen=document.getElementById("gameScreen");
+const finalScreen=document.getElementById("finalScreen");
+
+/* SERCA */
+setInterval(()=>{
+  const h=document.createElement("div");
+  h.className="heart";
+  h.innerText="❤️";
+  h.style.left=Math.random()*100+"vw";
+  h.style.fontSize=15+Math.random()*20+"px";
+  h.style.animationDuration=4+Math.random()*3+"s";
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),7000);
+},300);
+
+/* PUZZLE */
+const puzzle=document.getElementById("puzzle");
+let dragged=null;
+const size=16;
+
+function createPuzzle(){
+  puzzle.innerHTML="";
+  for(let i=0;i<size;i++){
+    const p=document.createElement("div");
+    p.className="piece";
+
+    const x=(i%4)*-80;
+    const y=Math.floor(i/4)*-80;
+
+    p.style.backgroundPosition=`${x}px ${y}px`;
+    p.dataset.id=i;
+    p.draggable=true;
+
+    p.ondragstart=()=>dragged=p;
+    p.ondragover=e=>e.preventDefault();
+    p.ondrop=()=>{
+      if(dragged&&dragged!==p){
+        swap(dragged,p);
+        checkWin();
+      }
+    }
+
+    puzzle.appendChild(p);
+  }
+}
+
+function swap(a,b){
+  let t=a.style.backgroundPosition;
+  let d=a.dataset.id;
+
+  a.style.backgroundPosition=b.style.backgroundPosition;
+  a.dataset.id=b.dataset.id;
+
+  b.style.backgroundPosition=t;
+  b.dataset.id=d;
+}
+
+function shuffle(){
+  const arr=[...document.querySelectorAll(".piece")];
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    swap(arr[i],arr[j]);
+  }
+}
+
+function checkWin(){
+  const arr=document.querySelectorAll(".piece");
+  let ok=true;
+
+  arr.forEach((p,i)=>{
+    if(Number(p.dataset.id)!==i) ok=false;
+  });
+
+  if(ok){
+    puzzleScreen.style.display="none";
+    winScreen.style.display="flex";
+  }
+}
+
+/* GRA SERCA */
+const target=document.getElementById("target");
+const scoreDiv=document.getElementById("score");
+let score=0;
+
+function startGame(){
+  winScreen.style.display="none";
+  gameScreen.style.display="flex";
+  score=0;
+  scoreDiv.innerText="0 / 15";
+  moveTarget();
+}
+
+function moveTarget(){
+  const box=document.getElementById("gameBox");
+
+  const x=Math.random()*(box.clientWidth-40);
+  const y=Math.random()*(box.clientHeight-40);
+
+  target.style.left=x+"px";
+  target.style.top=y+"px";
+}
+
+target.onclick=()=>{
+  score++;
+  scoreDiv.innerText=score+" / 15";
+
+  if(score>=15){
+    finish();
+  }else{
+    moveTarget();
+  }
+}
+
+function finish(){
+  gameScreen.style.display="none";
+  finalScreen.style.display="flex";
+}
+
+/* START */
+createPuzzle();
+shuffle();
+</script>
+</body>
+</html>
